@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Basic Button Test</title>
+  </head>
+  <body>
+    <h1>Basic Button Test</h1>
+    <div id="container">
+    </div>
+    <div id="message">
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/15.2.1/react.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/15.2.1/react-dom.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.34/browser.min.js"></script>
+    <script type="text/babel">
+      var TimeDisplay = React.createClass({
+        render: function() {
+          return (
+            <div id="text">{this.props.timeText}</div>
+          );
+        }
+      });
+
+      var TestButton = React.createClass({
+        getInitialState: function() {
+          return {timeText: (new Date()).toString()};
+        },
+        handleClick: function(e) {
+          var timestamp = (new Date()).getTime();
+          var rounded = Math.floor(timestamp / 5000);
+          this.setState({timeText: rounded});
+
+          console.log(timestamp, rounded);
+        },
+        handleMouseOver: function(e) {
+          //console.log('over e:', e);
+        },
+        handleWheel: function(e) {
+          console.log('wheel e:', e);
+          console.log('native:', e.nativeEvent);
+        },
+        render: function() {
+            return (
+              <div>
+                <TimeDisplay timeText={this.state.timeText}></TimeDisplay>
+                <button id="btn_test" onWheel={this.handleWheel} onMouseOver={this.handleMouseOver} onClick={this.handleClick}>I am Test Button</button>
+              </div>
+            );
+        }
+      });
+
+      ReactDOM.render(
+        <TestButton/>,
+        document.getElementById('container')
+      );
+
+    </script>
+  </body>
+</html>
