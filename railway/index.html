@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>台鐵時刻表 taiwan railway</title>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.6-rc.0/css/select2.min.css"
+      rel="stylesheet"
+    />
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsSHA/2.3.1/sha.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.6-rc.0/js/select2.min.js"></script>
+    <style>
+      .input-container {
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+      }
+      .input-container div {
+        padding: 20px;
+      }
+      .input-container select {
+        width: 100px;
+      }
+      .date-container,
+      .button-container {
+        display: flex;
+        justify-content: center;
+        padding: 10px;
+      }
+      .button-container input {
+        margin: 6px;
+      }
+      .output-container {
+        display: flex;
+        justify-content: center;
+      }
+      .output-container table {
+        border-collapse: collapse;
+      }
+      .output-container td {
+        border: 1px solid rgb(50, 50, 50, 0.8);
+        padding: 6px;
+      }
+      .output-container td:nth-child(2),
+      .output-container td:nth-child(4) {
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root">
+      <div class="input-container">
+        <div>
+          開車：<select id="station-start" placeholder="車站名"> </select>
+        </div>
+        <div>
+          <input type="button" id="switch-station" value="互換">
+        </div> 
+        <div>
+          抵達：<select id="station-stop" placeholder="車站名"> </select>
+        </div>
+      </div>
+      <div class="date-container">
+        日期：<input type="date" id="query-date" />
+      </div>
+      <div class="button-container">
+        <input id="query-button" type="button" value="查詢" />
+        <input id="update-station-button" type="button" value="更新車站" />
+      </div>
+      <div class="output-container"></div>
+    </div>
+    <script>
+      const getAuthorizationHeader = () => {
+        const appId = "FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF";
+        const appKey = "FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF";
+        const gmtString = new Date().toGMTString();
+        const shaObj = new jsSHA("SHA-1", "TEXT");
+        shaObj.setHMACKey(appKey, "TEXT");
+        shaObj.update("x-date: " + gmtString);
+
+        const hmac = shaObj.getHMAC("B64");
+        const authorization = `hmac username="${appId}", algorithm="hmac-sha1", headers="x-date", signature="${hmac}"`;
+
+        return { authorization, gmtString };
+      };
+
+      const appendParameters = (baseUrl, params) => {
+        const urlParams = new URLSearchParams();
+        for (const [key, value] of Object.entries(params)) {
+          urlParams.set(key, value);
+        }
+        const url = `${baseUrl}?${urlParams.toString()}`;
+        return url;
+      };
+
+      const generalFetch = async url => {
+        const { authorization, gmtString } = getAuthorizationHeader();
+
+        const headers = {
+          Accept: "application/json",
+          Authorization: authorization,
+          "X-Date": gmtString
+        };
+
+        const resp = await fetch(url, {
+          headers: headers
+        });
+
+        const myJson = await resp.json();
+
+        return myJson;
+      };
+
+      const fetchStationList = async () => {
+        const baseUrl = "https://ptx.transportdata.tw/MOTC/v2/Rail/TRA/Station";
+        const params = {
+          $top: 300,
+          $format: "JSON"
+        };
+        const url = appendParameters(baseUrl, params);
+        const myJson = await generalFetch(url);
+
+        return myJson;
+      };
+
+      const fetchDailyTimetable = async (start, stop, date) => {
+        const baseUrl =
+          "https://ptx.transportdata.tw/MOTC/v2/Rail/TRA/DailyTimetable";
+        const url = `${baseUrl}/OD/${start}/to/${stop}/${date}?$top=300&$format=JSON&$orderby=OriginStopTime/DepartureTime`;
+
+        const myJson = await generalFetch(url);
+        return myJson;
+      };
+
+      const drawTimetable = timetable => {
+        const data = [];
+        timetable.forEach(item => {
+          data.push({
+            trainNo: item.DailyTrainInfo.TrainNo,
+            trainName: item.DailyTrainInfo.TrainTypeName.Zh_tw,
+            startTime: item.OriginStopTime.DepartureTime,
+            stopTime: item.DestinationStopTime.ArrivalTime
+          });
+        });
+
+        const htmlLines = [];
+        htmlLines.push("<table>");
+        data.forEach(item => {
+          htmlLines.push("<tr>");
+          htmlLines.push(`<td>${item.trainNo} - ${item.trainName}</td>`);
+          htmlLines.push(`<td>${item.startTime}</td>`);
+          htmlLines.push("<td>&gt;</td>");
+          htmlLines.push(`<td>${item.stopTime}</td>`);
+          htmlLines.push("</tr>");
+        });
+        htmlLines.push("</table>");
+
+        const html = htmlLines.join("\n");
+        const a = $(".output-container");
+        $(".output-container").html(html);
+      };
+
+      const doQuery = async () => {
+        const startId = $("#station-start").val();
+        const stopId = $("#station-stop").val();
+        const date = $("#query-date").val();
+
+        const timetable = await fetchDailyTimetable(startId, stopId, date);
+
+        drawTimetable(timetable);
+      };
+
+      const updateStationList = async () => {
+        const stationList = await fetchStationList();
+
+        const stationData = [];
+
+        stationList.forEach(item => {
+          stationData.push({
+            id: item.StationID,
+            text: item.StationName.Zh_tw
+          });
+        });
+
+        $("#station-start").select2({
+          data: stationData
+        });
+        $("#station-stop").select2({
+          data: stationData
+        });
+
+        // set start to 1242 新左營
+        $("#station-start")
+          .val("1242")
+          .trigger("change");
+
+        // set stop to 1421 正義
+        $("#station-stop")
+          .val("1421")
+          .trigger("change");
+      };
+
+      const switchStation = () => {
+        const start = $("#station-start").val();
+        const stop = $("#station-stop").val();
+        $("#station-start").val(stop).trigger("change");
+        $("#station-stop").val(start).trigger("change");
+      };
+
+      const initButtonHandler = () => {
+        $("#query-button").on("click", async () => {
+          await doQuery();
+        });
+
+        $("#update-station-button").on("click", async () => {
+          await updateStationList();
+        });
+
+        $("#switch-station").on("click", switchStation);
+      };
+
+      (async () => {
+        initButtonHandler();
+
+        const today = new Date().toISOString();
+        $("#query-date").val(today.substring(0, today.indexOf("T")));
+
+        await updateStationList();
+
+        // filter: TrainNo eq '3118'
+      })();
+    </script>
+  </body>
+</html>
