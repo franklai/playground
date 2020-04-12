@@ -13,13 +13,18 @@
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.6-rc.0/js/select2.min.js"></script>
     <style>
+      body {
+        padding: 20px 0;
+        max-width: 600px;
+        margin: 0 auto;
+      }
       .input-container {
         display: flex;
         flex-direction: row;
-        justify-content: center;
+        justify-content: space-around;
       }
       .input-container div {
-        padding: 20px;
+        padding: 0px;
       }
       .input-container select {
         width: 100px;
@@ -57,14 +62,15 @@
           開車：<select id="station-start" placeholder="車站名"> </select>
         </div>
         <div>
-          <input type="button" id="switch-station" value="互換">
-        </div> 
+          <input type="button" id="switch-station" value="互換" />
+        </div>
         <div>
           抵達：<select id="station-stop" placeholder="車站名"> </select>
         </div>
       </div>
       <div class="date-container">
-        日期：<input type="date" id="query-date" />
+        <div>日期：<input type="date" id="query-date" /></div>
+        <div>時間：<input type="time" id="query-time" /></div>
       </div>
       <div class="button-container">
         <input id="query-button" type="button" value="查詢" />
@@ -96,17 +102,17 @@
         return url;
       };
 
-      const generalFetch = async url => {
+      const generalFetch = async (url) => {
         const { authorization, gmtString } = getAuthorizationHeader();
 
         const headers = {
           Accept: "application/json",
           Authorization: authorization,
-          "X-Date": gmtString
+          "X-Date": gmtString,
         };
 
         const resp = await fetch(url, {
-          headers: headers
+          headers: headers,
         });
 
         const myJson = await resp.json();
@@ -118,7 +124,7 @@
         const baseUrl = "https://ptx.transportdata.tw/MOTC/v2/Rail/TRA/Station";
         const params = {
           $top: 300,
-          $format: "JSON"
+          $format: "JSON",
         };
         const url = appendParameters(baseUrl, params);
         const myJson = await generalFetch(url);
@@ -135,20 +141,51 @@
         return myJson;
       };
 
-      const drawTimetable = timetable => {
+      const convertToMinutes = (string) => {
+        const [min, sec] = string.split(":");
+        return parseInt(min, 10) * 60 + parseInt(sec, 10);
+      };
+
+      const inTimeRange = (
+        inputTime,
+        originDepartureTime,
+        destinationArrivalTime
+      ) => {
+        const input = convertToMinutes(inputTime);
+        const departure = convertToMinutes(originDepartureTime);
+        const arrival = convertToMinutes(destinationArrivalTime);
+
+        // | input - 30 | ~ | input + 90 |
+        if (departure < input - 30) {
+          return false;
+        }
+        if (input + 90 < departure) {
+          return false;
+        }
+        return true;
+      };
+
+      const drawTimetable = (timetable, time) => {
         const data = [];
-        timetable.forEach(item => {
+        timetable.forEach((item) => {
+          const originDepartureTime = item.OriginStopTime.DepartureTime;
+          const destinationArrivalTime = item.DestinationStopTime.ArrivalTime;
+
+          if (!inTimeRange(time, originDepartureTime, destinationArrivalTime)) {
+            return;
+          }
+
           data.push({
             trainNo: item.DailyTrainInfo.TrainNo,
             trainName: item.DailyTrainInfo.TrainTypeName.Zh_tw,
             startTime: item.OriginStopTime.DepartureTime,
-            stopTime: item.DestinationStopTime.ArrivalTime
+            stopTime: item.DestinationStopTime.ArrivalTime,
           });
         });
 
         const htmlLines = [];
         htmlLines.push("<table>");
-        data.forEach(item => {
+        data.forEach((item) => {
           htmlLines.push("<tr>");
           htmlLines.push(`<td>${item.trainNo} - ${item.trainName}</td>`);
           htmlLines.push(`<td>${item.startTime}</td>`);
@@ -167,10 +204,11 @@
         const startId = $("#station-start").val();
         const stopId = $("#station-stop").val();
         const date = $("#query-date").val();
+        const time = $("#query-time").val();
 
         const timetable = await fetchDailyTimetable(startId, stopId, date);
 
-        drawTimetable(timetable);
+        drawTimetable(timetable, time);
       };
 
       const updateStationList = async () => {
@@ -178,29 +216,27 @@
 
         const stationData = [];
 
-        stationList.forEach(item => {
+        stationList.forEach((item) => {
           stationData.push({
             id: item.StationID,
-            text: item.StationName.Zh_tw
+            text: item.StationName.Zh_tw,
           });
         });
 
         $("#station-start").select2({
-          data: stationData
+          data: stationData,
+          placeholder: "車站…",
         });
         $("#station-stop").select2({
-          data: stationData
+          data: stationData,
+          placeholder: "車站…",
         });
 
-        // set start to 1242 新左營
-        $("#station-start")
-          .val("1242")
-          .trigger("change");
+        // set start to 4340 新左營
+        $("#station-start").val("4340").trigger("change");
 
-        // set stop to 1421 正義
-        $("#station-stop")
-          .val("1421")
-          .trigger("change");
+        // set stop to 4430 正義
+        $("#station-stop").val("4430").trigger("change");
       };
 
       const switchStation = () => {
@@ -225,8 +261,12 @@
       (async () => {
         initButtonHandler();
 
-        const today = new Date().toISOString();
-        $("#query-date").val(today.substring(0, today.indexOf("T")));
+        const today = new Date();
+        const monthString = `${today.getMonth() + 1}`.padStart(2, "0");
+        const dateString = `${today.getFullYear()}-${monthString}-${today.getDate()}`;
+        const timeString = `${today.getHours()}:${today.getMinutes()}`;
+        $("#query-date").val(dateString);
+        $("#query-time").val(timeString);
 
         await updateStationList();
 
