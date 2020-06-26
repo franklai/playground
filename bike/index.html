@@ -157,6 +157,9 @@
 
         const htmlLines = [];
 
+        htmlLines.push('<span class="name">站名</span>');
+        htmlLines.push('<span class="bike">車輛</span>');
+        htmlLines.push('<span class="space">空位</span>');
         Object.values(map).forEach((station) => {
           const limited_bike_class = station.bike < 10 ? "limited" : "";
           const limited_space_class = station.space < 10 ? "limited" : "";
