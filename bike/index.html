@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>公共自行車 剩餘車輛、車位</title>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/jsSHA/2.4.2/sha.js"
+      integrity="sha256-cyY9tyQbycFc+9eOsamJ8K8wmBsMcsXgxS9nLLkqK+I="
+      crossorigin="anonymous"
+    ></script>
+    <style>
+      body {
+        padding: 10px 0;
+        max-width: 320px;
+        margin: 0 auto;
+      }
+      #bike-container {
+        display: grid;
+        grid-template-columns: 200px 60px 60px;
+        margin: 0 auto;
+      }
+      .name {
+        padding: 0.6rem 0;
+        border-bottom: 1px dashed grey;
+      }
+      .bike,
+      .space {
+        font-size: 1.4rem;
+        font-weight: bold;
+        text-align: center;
+        padding: 0.3rem 0;
+        border-bottom: 1px dashed grey;
+      }
+      .bike {
+        color: green;
+      }
+      .space {
+        color: grey;
+      }
+
+      .limited {
+        color: orange !important;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root">
+      <h1>公共自行車</h1>
+
+      <div id="button-container">
+        <input type="button" id="refresh" value="更新" />
+      </div>
+      <div id="bike-container">
+        <div>
+          <span class="station-name">捷運高鐵桃園站(A18)</span>
+          <span class="available-bike">26</span>
+          <span class="available-space">31</span>
+        </div>
+      </div>
+    </div>
+    <script type="application/javascript">
+      const getAuthorizationHeader = () => {
+        const appId = "FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF";
+        const appKey = "FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF";
+        const gmtString = new Date().toGMTString();
+        const shaObj = new jsSHA("SHA-1", "TEXT");
+        shaObj.setHMACKey(appKey, "TEXT");
+        shaObj.update("x-date: " + gmtString);
+
+        const hmac = shaObj.getHMAC("B64");
+        const authorization = `hmac username="${appId}", algorithm="hmac-sha1", headers="x-date", signature="${hmac}"`;
+
+        return { authorization, gmtString };
+      };
+
+      const appendParameters = (baseUrl, params) => {
+        const urlParams = new URLSearchParams();
+        for (const [key, value] of Object.entries(params)) {
+          urlParams.set(key, value);
+        }
+        const url = `${baseUrl}?${urlParams.toString()}`;
+        return url;
+      };
+
+      const generalFetch = async (url) => {
+        const { authorization, gmtString } = getAuthorizationHeader();
+
+        const headers = {
+          Accept: "application/json",
+          Authorization: authorization,
+          "X-Date": gmtString,
+        };
+
+        const resp = await fetch(url, {
+          headers: headers,
+        });
+
+        const myJson = await resp.json();
+
+        return myJson;
+      };
+
+      const fetchStationById = async (stationIds) => {
+        const baseUrl =
+          "https://ptx.transportdata.tw/MOTC/v2/Bike/Station/Taoyuan";
+        const params = {
+          $top: 10,
+          $format: "JSON",
+        };
+
+        params["$filter"] = stationIds
+          .map((id) => `StationID eq '${id}'`)
+          .join(" or ");
+        const url = appendParameters(baseUrl, params);
+        const myJson = await generalFetch(url);
+
+        return myJson;
+      };
+
+      const fetchStationAvailability = async (stationIds) => {
+        const baseUrl =
+          "https://ptx.transportdata.tw/MOTC/v2/Bike/Availability/Taoyuan";
+        const params = {
+          $top: 10,
+          $format: "JSON",
+        };
+
+        params["$filter"] = stationIds
+          .map((id) => `StationID eq '${id}'`)
+          .join(" or ");
+        const url = appendParameters(baseUrl, params);
+        const myJson = await generalFetch(url);
+
+        return myJson;
+      };
+
+      const drawBikeAvailability = (stations, availability) => {
+        const map = {};
+
+        stations.forEach((item) => {
+          map[item.StationID] = {
+            name: item.StationName.Zh_tw,
+          };
+        });
+
+        availability.forEach((item) => {
+          const station = map[item.StationID];
+          if (!station) {
+            console.error(`failed to find station, id: ${item.StationID}`);
+            return;
+          }
+
+          station.bike = item.AvailableRentBikes;
+          station.space = item.AvailableReturnBikes;
+        });
+
+        const htmlLines = [];
+
+        Object.values(map).forEach((station) => {
+          const limited_bike_class = station.bike < 10 ? "limited" : "";
+          const limited_space_class = station.space < 10 ? "limited" : "";
+          htmlLines.push(`<span class="name">${station.name}</span>`);
+          htmlLines.push(
+            `<span class="bike ${limited_bike_class}">${station.bike}</span>`
+          );
+          htmlLines.push(
+            `<span class="space ${limited_space_class}">${station.space}</span>`
+          );
+        });
+
+        const html = htmlLines.join("\n");
+        const container = document.querySelector("#bike-container");
+        container.innerHTML = html;
+      };
+
+      const doQuery = async (stationIds) => {
+        const stations = await fetchStationById(stationIds);
+        const availability = await fetchStationAvailability(stationIds);
+
+        await drawBikeAvailability(stations, availability);
+      };
+
+      const initButtonHandler = (stationIds) => {
+        document.querySelector("#refresh").addEventListener("click", () => {
+          doQuery(stationIds);
+        });
+      };
+
+      (async () => {
+        const stationIds = [
+          2100, // 捷運高鐵桃園站(A18)
+          2212, // 青塘園
+          2101, // 捷運桃園體育園區站(A19)
+          2343, // 高鐵桃園站(3號出口)
+        ];
+
+        initButtonHandler(stationIds);
+
+        await doQuery(stationIds);
+      })();
+    </script>
+  </body>
+</html>
