@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>公共自行車 剩餘車輛、車位</title>
+    <title>公共自行車資訊</title>
     <script
       src="https://cdnjs.cloudflare.com/ajax/libs/jsSHA/2.4.2/sha.js"
       integrity="sha256-cyY9tyQbycFc+9eOsamJ8K8wmBsMcsXgxS9nLLkqK+I="
@@ -18,19 +18,18 @@
       #bike-container {
         display: grid;
         grid-template-columns: 200px 60px 60px;
+        align-items: center;
         margin: 0 auto;
+        grid-row-gap: 1rem;
       }
       .name {
-        padding: 0.6rem 0;
-        border-bottom: 1px dashed grey;
+        text-align: right;
       }
       .bike,
       .space {
         font-size: 1.4rem;
         font-weight: bold;
         text-align: center;
-        padding: 0.3rem 0;
-        border-bottom: 1px dashed grey;
       }
       .bike {
         color: green;
@@ -38,25 +37,34 @@
       .space {
         color: grey;
       }
-
       .limited {
         color: orange !important;
+      }
+
+      input[type="button"] {
+        font-size: 1.2rem;
+        padding: 0.2rem 1.6rem;
+        border-radius: 1rem;
+        border-style: solid;
+        border-color: black;
+        border-width: 0.2rem;
+        background-color: transparent;
+        margin-right: 1rem;
       }
     </style>
   </head>
   <body>
     <div id="root">
-      <h1>公共自行車</h1>
+      <h1>公共自行車資訊</h1>
 
       <div id="button-container">
         <input type="button" id="refresh" value="更新" />
+        <span id="refresh-status"></span>
       </div>
       <div id="bike-container">
-        <div>
-          <span class="station-name">捷運高鐵桃園站(A18)</span>
-          <span class="available-bike">26</span>
-          <span class="available-space">31</span>
-        </div>
+        <div class="name">捷運高鐵桃園站(A18)</div>
+        <div class="bike">26</div>
+        <div class="space">31</div>
       </div>
     </div>
     <script type="application/javascript">
@@ -157,18 +165,18 @@
 
         const htmlLines = [];
 
-        htmlLines.push('<span class="name">站名</span>');
-        htmlLines.push('<span class="bike">車輛</span>');
-        htmlLines.push('<span class="space">空位</span>');
+        htmlLines.push('<div class="name">站名</div>');
+        htmlLines.push('<div class="bike">車輛</div>');
+        htmlLines.push('<div class="space">空位</div>');
         Object.values(map).forEach((station) => {
           const limited_bike_class = station.bike < 10 ? "limited" : "";
           const limited_space_class = station.space < 10 ? "limited" : "";
-          htmlLines.push(`<span class="name">${station.name}</span>`);
+          htmlLines.push(`<div class="name">${station.name}</div>`);
           htmlLines.push(
-            `<span class="bike ${limited_bike_class}">${station.bike}</span>`
+            `<div class="bike ${limited_bike_class}">${station.bike}</div>`
           );
           htmlLines.push(
-            `<span class="space ${limited_space_class}">${station.space}</span>`
+            `<div class="space ${limited_space_class}">${station.space}</div>`
           );
         });
 
@@ -177,11 +185,26 @@
         container.innerHTML = html;
       };
 
+      const updateRefreshStatus = (text) => {
+        document.querySelector("#refresh-status").innerHTML = text;
+      };
+
+      const setRefreshing = () => {
+        updateRefreshStatus("更新中");
+      };
+
+      const setRefreshTime = () => {
+        const text = `${new Date().toLocaleString()}`;
+        updateRefreshStatus(text);
+      };
+
       const doQuery = async (stationIds) => {
+        setRefreshing();
         const stations = await fetchStationById(stationIds);
         const availability = await fetchStationAvailability(stationIds);
 
         await drawBikeAvailability(stations, availability);
+        setRefreshTime();
       };
 
       const initButtonHandler = (stationIds) => {
