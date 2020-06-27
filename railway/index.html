@@ -258,15 +258,20 @@
         $("#switch-station").on("click", switchStation);
       };
 
+      const padZero = (value) => {
+        return `${value}`.padStart(2, "0");
+      }
+
       (async () => {
         initButtonHandler();
 
         const today = new Date();
-        const monthString = `${today.getMonth() + 1}`.padStart(2, "0");
-        const dateString = `${today.getFullYear()}-${monthString}-${today.getDate()}`;
-        const timeString = `${today.getHours()}:${today.getMinutes()}`;
+        const dateString = `${today.getFullYear()}-${padZero(today.getMonth() + 1)}-${padZero(today.getDate())}`;
+        const timeString = `${padZero(today.getHours())}:${padZero(today.getMinutes())}`;
         $("#query-date").val(dateString);
         $("#query-time").val(timeString);
+
+        console.log('time,', timeString)
 
         await updateStationList();
 
