@@ -109,15 +109,22 @@
         return myJson;
       };
 
-      const fetchStationById = async (stationIds) => {
-        const baseUrl =
-          "https://ptx.transportdata.tw/MOTC/v2/Bike/Station/Taoyuan";
+      const fetchStations = async (stations) => {
+        const result = [];
+        for (const {city, ids} of stations) {
+          result.push(...(await fetchStationById(city, ids)));
+        }
+        return result;
+      };
+
+      const fetchStationById = async (city, ids) => {
+        const baseUrl = `https://ptx.transportdata.tw/MOTC/v2/Bike/Station/${city}`;
         const params = {
           $top: 10,
           $format: "JSON",
         };
 
-        params["$filter"] = stationIds
+        params["$filter"] = ids
           .map((id) => `StationID eq '${id}'`)
           .join(" or ");
         const url = appendParameters(baseUrl, params);
@@ -126,15 +133,21 @@
         return myJson;
       };
 
-      const fetchStationAvailability = async (stationIds) => {
-        const baseUrl =
-          "https://ptx.transportdata.tw/MOTC/v2/Bike/Availability/Taoyuan";
+      const fetchStationAvailability = async (stations) => {
+        const result = [];
+        for (const {city, ids} of stations) {
+          result.push(...(await fetchStationAvailabilityById(city, ids)));
+        }
+        return result;
+      };
+      const fetchStationAvailabilityById = async (city, ids) => {
+        const baseUrl = `https://ptx.transportdata.tw/MOTC/v2/Bike/Availability/${city}`;
         const params = {
           $top: 10,
           $format: "JSON",
         };
 
-        params["$filter"] = stationIds
+        params["$filter"] = ids
           .map((id) => `StationID eq '${id}'`)
           .join(" or ");
         const url = appendParameters(baseUrl, params);
@@ -198,32 +211,44 @@
         updateRefreshStatus(text);
       };
 
-      const doQuery = async (stationIds) => {
+      const doQuery = async (input) => {
         setRefreshing();
-        const stations = await fetchStationById(stationIds);
-        const availability = await fetchStationAvailability(stationIds);
+        const stations = await fetchStations(input);
+        const availability = await fetchStationAvailability(input);
 
         await drawBikeAvailability(stations, availability);
         setRefreshTime();
       };
 
-      const initButtonHandler = (stationIds) => {
+      const initButtonHandler = (stations) => {
         document.querySelector("#refresh").addEventListener("click", () => {
-          doQuery(stationIds);
+          doQuery(stations);
         });
       };
 
       (async () => {
-        const stationIds = [
-          2100, // 捷運高鐵桃園站(A18)
-          2212, // 青塘園
-          2101, // 捷運桃園體育園區站(A19)
-          2343, // 高鐵桃園站(3號出口)
+        const stations = [
+          {
+            city: "NewTaipei",
+            ids: [
+              1266, // 捷運林口站(1號出口)
+              1378, // 三井Outlet
+            ],
+          },
+          {
+            city: "Taoyuan",
+            ids: [
+              2100, // 捷運高鐵桃園站(A18)
+              2212, // 青塘園
+              2101, // 捷運桃園體育園區站(A19)
+              2343, // 高鐵桃園站(3號出口)
+            ],
+          },
         ];
 
-        initButtonHandler(stationIds);
+        initButtonHandler(stations);
 
-        await doQuery(stationIds);
+        await doQuery(stations);
       })();
     </script>
   </body>
