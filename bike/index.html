@@ -17,7 +17,7 @@
       }
       #bike-container {
         display: grid;
-        grid-template-columns: 200px 60px 60px;
+        grid-template-columns: 200px 50px 50px 40px;
         align-items: center;
         margin: 0 auto;
         grid-row-gap: 1rem;
@@ -65,6 +65,7 @@
         <div class="name">捷運高鐵桃園站(A18)</div>
         <div class="bike">-</div>
         <div class="space">-</div>
+        <div class="diff">-</div>
       </div>
     </div>
     <script type="application/javascript">
@@ -118,7 +119,7 @@
       };
 
       const fetchStationById = async (city, ids) => {
-        const baseUrl = `http://ptx2.transportdata.tw/MOTC/v2/Bike/Station/${city}`;
+        const baseUrl = `https://ptx.transportdata.tw/MOTC/v2/Bike/Station/${city}`;
         const params = {
           $top: 10,
           $format: "JSON",
@@ -141,7 +142,7 @@
         return result;
       };
       const fetchStationAvailabilityById = async (city, ids) => {
-        const baseUrl = `http://ptx2.transportdata.tw/MOTC/v2/Bike/Availability/${city}`;
+        const baseUrl = `https://ptx.transportdata.tw/MOTC/v2/Bike/Availability/${city}`;
         const params = {
           $top: 10,
           $format: "JSON",
@@ -174,6 +175,7 @@
 
           station.bike = item.AvailableRentBikes;
           station.space = item.AvailableReturnBikes;
+          station.srcUpdateTime = item.SrcUpdateTime;
         });
 
         const htmlLines = [];
@@ -181,6 +183,10 @@
         htmlLines.push('<div class="name">站名</div>');
         htmlLines.push('<div class="bike">車輛</div>');
         htmlLines.push('<div class="space">空位</div>');
+        htmlLines.push('<div class="diff">更新</div>');
+
+        const now = new Date();
+
         Object.values(map).forEach((station) => {
           const limited_bike_class = station.bike < 10 ? "limited" : "";
           const limited_space_class = station.space < 10 ? "limited" : "";
@@ -190,6 +196,12 @@
           );
           htmlLines.push(
             `<div class="space ${limited_space_class}">${station.space}</div>`
+          );
+
+          const updateDate = new Date(station.srcUpdateTime);
+          const diffMinute = Math.floor((updateDate - now) / 1000 / 60);
+          htmlLines.push(
+            `<div class="diff">${diffMinute}</div>`
           );
         });
 
