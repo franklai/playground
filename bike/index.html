@@ -118,7 +118,7 @@
       };
 
       const fetchStationById = async (city, ids) => {
-        const baseUrl = `https://ptx.transportdata.tw/MOTC/v2/Bike/Station/${city}`;
+        const baseUrl = `http://ptx2.transportdata.tw/MOTC/v2/Bike/Station/${city}`;
         const params = {
           $top: 10,
           $format: "JSON",
@@ -141,7 +141,7 @@
         return result;
       };
       const fetchStationAvailabilityById = async (city, ids) => {
-        const baseUrl = `https://ptx.transportdata.tw/MOTC/v2/Bike/Availability/${city}`;
+        const baseUrl = `http://ptx2.transportdata.tw/MOTC/v2/Bike/Availability/${city}`;
         const params = {
           $top: 10,
           $format: "JSON",
