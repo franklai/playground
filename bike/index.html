@@ -17,7 +17,7 @@
       }
       #bike-container {
         display: grid;
-        grid-template-columns: 200px 50px 50px 40px;
+        grid-template-columns: 220px 60px 60px;
         align-items: center;
         margin: 0 auto;
         grid-row-gap: 1rem;
@@ -39,6 +39,12 @@
       }
       .limited {
         color: orange !important;
+      }
+      .diff {
+        color: dodgerblue;
+      }
+      .diff-over {
+        color: red;
       }
 
       input[type="button"] {
@@ -62,7 +68,7 @@
         <span id="refresh-status"></span>
       </div>
       <div id="bike-container">
-        <div class="name">捷運高鐵桃園站(A18)</div>
+        <div class="name">捷運高鐵桃園站(A18) <span class="diff">t3</span></div>
         <div class="bike">-</div>
         <div class="space">-</div>
         <div class="diff">-</div>
@@ -183,25 +189,23 @@
         htmlLines.push('<div class="name">站名</div>');
         htmlLines.push('<div class="bike">車輛</div>');
         htmlLines.push('<div class="space">空位</div>');
-        htmlLines.push('<div class="diff">更新</div>');
 
         const now = new Date();
 
         Object.values(map).forEach((station) => {
           const limited_bike_class = station.bike < 10 ? "limited" : "";
           const limited_space_class = station.space < 10 ? "limited" : "";
-          htmlLines.push(`<div class="name">${station.name}</div>`);
+
+          const updateDate = new Date(station.srcUpdateTime);
+          const diffMinute = Math.floor((now - updateDate) / 1000 / 60);
+          const diffStr = diffMinute > 30 ? '<span class="diff-over">t30+</span>' : `<span class="diff">t${diffMinute}</span>`;
+
+          htmlLines.push(`<div class="name">${station.name} ${diffStr}</div>`);
           htmlLines.push(
             `<div class="bike ${limited_bike_class}">${station.bike}</div>`
           );
           htmlLines.push(
             `<div class="space ${limited_space_class}">${station.space}</div>`
-          );
-
-          const updateDate = new Date(station.srcUpdateTime);
-          const diffMinute = Math.floor((updateDate - now) / 1000 / 60);
-          htmlLines.push(
-            `<div class="diff">${diffMinute}</div>`
           );
         });
 
