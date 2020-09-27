@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>clipboard test</title>
+
+    <style>
+      #text_input {
+        border-style: solid;
+        border-width: 3px;
+        padding: 6px;
+      }
+      #text_input[readonly] {
+        border-bottom-color: red;
+      }
+      #text_input:not([readonly]) {
+        border-bottom-color: green;
+      }
+    </style>
+  </head>
+  <body>
+    <p id="p_tag">hello, this is p tag</p>
+
+    <input
+      type="text"
+      id="text_input"
+      value="hello, this is text input"
+      readonly
+    />
+    <input
+      type="button"
+      value="DISABLE text input"
+      id="toggle_disabled"
+      onclick="toggleDisabled()"
+    />
+
+    <input
+      type="button"
+      value="set NO readonly"
+      id="toggle_readonly"
+      onclick="toggleReadonly()"
+    />
+
+    <br />
+    <br />
+    <input
+      type="button"
+      value="copy, execCommand"
+      onclick="copyByExecCommand()"
+    />
+
+    <br />
+    <br />
+    <input
+      type="button"
+      value="copy, clipboard.writeText"
+      onclick="copyByWriteText()"
+    />
+
+    <script type="application/javascript">
+      function getTextInput() {
+        return document.querySelector("#text_input");
+      }
+
+      function toggleDisabled() {
+        var elem = getTextInput();
+        var self = document.querySelector("#toggle_disabled");
+
+        if (elem.disabled) {
+          elem.disabled = false;
+          self.value = "DISABLE text input";
+        } else {
+          elem.disabled = true;
+          self.value = "enable text input";
+        }
+      }
+
+      function toggleReadonly() {
+        var elem = getTextInput();
+        var self = document.querySelector("#toggle_readonly");
+
+        var attr = elem.getAttribute("readonly");
+
+        if (elem.readOnly) {
+          elem.readOnly = false;
+          self.value = "set NO readonly";
+        } else {
+          elem.readOnly = true;
+          self.value = "set TO readonly";
+        }
+      }
+
+      function copyByExecCommand() {
+        if (
+          !document.queryCommandSupported ||
+          !document.queryCommandSupported("copy")
+        ) {
+          window.alert("execCommand('copy') not supported!");
+          return;
+        }
+
+        var elem = document.querySelector("#text_input");
+        elem.select();
+        var ret = document.execCommand("copy");
+        console.log("execCommand copy return value:", ret);
+        elem.blur();
+      }
+
+      function copyByWriteText() {
+        if (!navigator.clipboard) {
+          window.alert("navigator.clipboard not supported!");
+          return;
+        }
+
+        var elem = document.querySelector("#text_input");
+        var value = elem.value;
+        navigator.clipboard.writeText(value).then(function () {
+          console.log("writeText finished");
+        });
+      }
+    </script>
+  </body>
+</html>
