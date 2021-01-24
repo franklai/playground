@@ -5,17 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>公共自行車資訊</title>
     <script
-      src="https://cdnjs.cloudflare.com/ajax/libs/jsSHA/2.4.2/sha.js"
-      integrity="sha256-cyY9tyQbycFc+9eOsamJ8K8wmBsMcsXgxS9nLLkqK+I="
+      src="https://cdnjs.cloudflare.com/ajax/libs/jsSHA/3.2.0/sha.min.js"
+      integrity="sha512-/yIGjYJZIXZx10ig0yhbK41OiwcqBUxIj0xQJe+NwkMIdS/u07b6Mwo0nvXB4o7A6WiKnKOf92JwE5Ezo27u9Q=="
       crossorigin="anonymous"
     ></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.12/dist/vue.js"></script>
+    <!--
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.12/vue.min.js"
+      integrity="sha512-BKbSR+cfyxLdMAsE0naLReFSLg8/pjbgfxHh/k/kUC82Hy7r6HtR5hLhobaln2gcTvzkyyehrdREdjpsQwy2Jw=="
+      crossorigin="anonymous"
+    ></script>
+  -->
     <style>
       body {
         padding: 10px 0;
         max-width: 320px;
         margin: 0 auto;
       }
-      #bike-container {
+      .station {
         display: grid;
         grid-template-columns: 230px 50px 50px;
         align-items: center;
@@ -56,6 +64,7 @@
         border-width: 0.2rem;
         background-color: transparent;
         margin-right: 1rem;
+        cursor: pointer;
       }
     </style>
   </head>
@@ -64,17 +73,101 @@
       <h1>公共自行車資訊</h1>
 
       <div id="button-container">
-        <input type="button" id="refresh" value="更新" />
-        <span id="refresh-status"></span>
+        <input type="button" id="refresh" value="更新" @click="queryStations" />
+        <span id="refresh-status"
+          >{{ isUpdating ? "更新中" : lastUpdated.toLocaleString() }}</span
+        >
       </div>
       <div id="bike-container">
-        <div class="name">捷運高鐵桃園站(A18) <span class="diff">t3</span></div>
-        <div class="bike">-</div>
-        <div class="space">-</div>
-        <div class="diff">-</div>
+        <div
+          class="station"
+          v-for="station in stations"
+          v-bind:key="station.id"
+        >
+          <div class="name">
+            {{ station.name }} <span class="diff">t3</span>
+          </div>
+          <div class="bike">{{ station.bike }}</div>
+          <div class="space">{{ station.space }}</div>
+        </div>
       </div>
     </div>
     <script type="application/javascript">
+      const vm = new Vue({
+        el: "#root",
+        data: {
+          lastUpdated: new Date(),
+          isUpdating: false,
+          input: [
+            {
+              city: "NewTaipei",
+              ids: [
+                1266, // 捷運林口站(1號出口)
+                1378, // 三井Outlet
+              ],
+            },
+            {
+              city: "Taoyuan",
+              ids: [
+                2100, // 捷運高鐵桃園站(A18)
+                2212, // 青塘園
+                2101, // 捷運桃園體育園區站(A19)
+                2343, // 高鐵桃園站(3號出口)
+                2275, // 竹風青田
+              ],
+            },
+          ],
+          stations: [
+            {
+              id: 2100,
+              name: "捷運高鐵桃園站(A18)",
+              bike: 0,
+              space: 0,
+              update: 0,
+            },
+          ],
+        },
+        methods: {
+          async queryStations() {
+            const stations = await fetchStations(this.input);
+            const availability = await fetchStationAvailability(this.input);
+
+            const stationMap = new Map();
+
+            stations.forEach((item) => {
+              stationMap.set(item.StationID, {
+                name: item.StationName.Zh_tw,
+              });
+            });
+
+            availability.forEach((item) => {
+              const station = stationMap.get(item.StationID);
+              if (!station) {
+                console.error(`failed to find station, id: ${item.StationID}`);
+                return;
+              }
+
+              station.bike = item.AvailableRentBikes;
+              station.space = item.AvailableReturnBikes;
+              station.update = item.SrcUpdateTime;
+            });
+
+            stationsToUpdate = [];
+            const now = new Date();
+
+            for (const [key, item] of stationMap) {
+              stationsToUpdate.push({
+                id: key,
+                diff: now - item.update,
+                ...item,
+              });
+            }
+
+            this.stations = stationsToUpdate;
+          },
+        },
+      });
+
       const getAuthorizationHeader = () => {
         const appId = "FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF";
         const appKey = "FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF";
@@ -118,7 +211,7 @@
 
       const fetchStations = async (stations) => {
         const result = [];
-        for (const {city, ids} of stations) {
+        for (const { city, ids } of stations) {
           result.push(...(await fetchStationById(city, ids)));
         }
         return result;
@@ -142,7 +235,7 @@
 
       const fetchStationAvailability = async (stations) => {
         const result = [];
-        for (const {city, ids} of stations) {
+        for (const { city, ids } of stations) {
           result.push(...(await fetchStationAvailabilityById(city, ids)));
         }
         return result;
@@ -163,109 +256,8 @@
         return myJson;
       };
 
-      const drawBikeAvailability = (stations, availability) => {
-        const map = {};
-
-        stations.forEach((item) => {
-          map[item.StationID] = {
-            name: item.StationName.Zh_tw,
-          };
-        });
-
-        availability.forEach((item) => {
-          const station = map[item.StationID];
-          if (!station) {
-            console.error(`failed to find station, id: ${item.StationID}`);
-            return;
-          }
-
-          station.bike = item.AvailableRentBikes;
-          station.space = item.AvailableReturnBikes;
-          station.srcUpdateTime = item.SrcUpdateTime;
-        });
-
-        const htmlLines = [];
-
-        htmlLines.push('<div class="name">站名</div>');
-        htmlLines.push('<div class="bike">車輛</div>');
-        htmlLines.push('<div class="space">空位</div>');
-
-        const now = new Date();
-
-        Object.values(map).forEach((station) => {
-          const limited_bike_class = station.bike < 10 ? "limited" : "";
-          const limited_space_class = station.space < 10 ? "limited" : "";
-
-          const updateDate = new Date(station.srcUpdateTime);
-          const diffMinute = Math.floor((now - updateDate) / 1000 / 60);
-          const diffStr = diffMinute > 30 ? '<span class="diff-over">t30+</span>' : `<span class="diff">t${diffMinute}</span>`;
-
-          htmlLines.push(`<div class="name">${station.name} ${diffStr}</div>`);
-          htmlLines.push(
-            `<div class="bike ${limited_bike_class}">${station.bike}</div>`
-          );
-          htmlLines.push(
-            `<div class="space ${limited_space_class}">${station.space}</div>`
-          );
-        });
-
-        const html = htmlLines.join("\n");
-        const container = document.querySelector("#bike-container");
-        container.innerHTML = html;
-      };
-
-      const updateRefreshStatus = (text) => {
-        document.querySelector("#refresh-status").innerHTML = text;
-      };
-
-      const setRefreshing = () => {
-        updateRefreshStatus("更新中");
-      };
-
-      const setRefreshTime = () => {
-        const text = `${new Date().toLocaleString()}`;
-        updateRefreshStatus(text);
-      };
-
-      const doQuery = async (input) => {
-        setRefreshing();
-        const stations = await fetchStations(input);
-        const availability = await fetchStationAvailability(input);
-
-        await drawBikeAvailability(stations, availability);
-        setRefreshTime();
-      };
-
-      const initButtonHandler = (stations) => {
-        document.querySelector("#refresh").addEventListener("click", () => {
-          doQuery(stations);
-        });
-      };
-
       (async () => {
-        const stations = [
-          {
-            city: "NewTaipei",
-            ids: [
-              1266, // 捷運林口站(1號出口)
-              1378, // 三井Outlet
-            ],
-          },
-          {
-            city: "Taoyuan",
-            ids: [
-              2100, // 捷運高鐵桃園站(A18)
-              2212, // 青塘園
-              2101, // 捷運桃園體育園區站(A19)
-              2343, // 高鐵桃園站(3號出口)
-              2275, // 竹風青田
-            ],
-          },
-        ];
-
-        initButtonHandler(stations);
-
-        await doQuery(stations);
+        await vm.queryStations();
       })();
     </script>
   </body>
