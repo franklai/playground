@@ -9,14 +9,13 @@
       integrity="sha512-/yIGjYJZIXZx10ig0yhbK41OiwcqBUxIj0xQJe+NwkMIdS/u07b6Mwo0nvXB4o7A6WiKnKOf92JwE5Ezo27u9Q=="
       crossorigin="anonymous"
     ></script>
-    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.12/dist/vue.js"></script>
-    <!--
     <script
       src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.12/vue.min.js"
       integrity="sha512-BKbSR+cfyxLdMAsE0naLReFSLg8/pjbgfxHh/k/kUC82Hy7r6HtR5hLhobaln2gcTvzkyyehrdREdjpsQwy2Jw=="
       crossorigin="anonymous"
     ></script>
-  -->
+    <script src="bike-station.js"></script>
+
     <style>
       body {
         padding: 10px 0;
@@ -79,17 +78,11 @@
         >
       </div>
       <div id="bike-container">
-        <div
-          class="station"
+        <bike-station
           v-for="station in stations"
           v-bind:key="station.id"
-        >
-          <div class="name">
-            {{ station.name }} <span class="diff">t3</span>
-          </div>
-          <div class="bike">{{ station.bike }}</div>
-          <div class="space">{{ station.space }}</div>
-        </div>
+          v-bind:station="station"
+        ></bike-station>
       </div>
     </div>
     <script type="application/javascript">
@@ -129,6 +122,8 @@
         },
         methods: {
           async queryStations() {
+            this.isUpdating = true;
+
             const stations = await fetchStations(this.input);
             const availability = await fetchStationAvailability(this.input);
 
@@ -149,7 +144,7 @@
 
               station.bike = item.AvailableRentBikes;
               station.space = item.AvailableReturnBikes;
-              station.update = item.SrcUpdateTime;
+              station.update = new Date(item.SrcUpdateTime);
             });
 
             stationsToUpdate = [];
@@ -158,12 +153,14 @@
             for (const [key, item] of stationMap) {
               stationsToUpdate.push({
                 id: key,
-                diff: now - item.update,
+                diff: Math.floor((now - item.update) / 1000 / 60),
                 ...item,
               });
             }
 
             this.stations = stationsToUpdate;
+            this.lastUpdated = now;
+            this.isUpdating = false;
           },
         },
       });
