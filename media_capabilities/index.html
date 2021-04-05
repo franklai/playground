@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Media Capabilities test</title>
+    <style>
+      td {
+        padding: 2px 6px;
+      }
+    </style>
+  </head>
+  <body>
+    <div>
+      <a href="https://cconcolato.github.io/media-mime-support/" target="_blank"
+        >Support for ISOBMFF-based MIME types in Browsers</a
+      >
+      <hr />
+      <div id="userAgent"></div>
+      <hr />
+      <table>
+        <tr id="avc1"></tr>
+        <tr id="avc1-4k"></tr>
+        <tr id="hvc1"></tr>
+        <tr id="hvc1-4k"></tr>
+
+        <tr id="av01"></tr>
+        <tr id="mp4v"></tr>
+
+        <tr id="aac"></tr>
+        <tr id="alac"></tr>
+        <tr id="mp3"></tr>
+        <tr id="wav"></tr>
+        <tr id="flac"></tr>
+      </table>
+      <hr />
+      <video id="videoTag"></video>
+    </div>
+
+    <script type="application/javascript">
+      document.querySelector("#userAgent").innerHTML = navigator.userAgent;
+
+      const getText = (ok, text) => {
+        const color = ok ? "green" : "red";
+        return `<span style="color: ${color}">${
+          ok ? "" : "Not "
+        } ${text}</span>`;
+      };
+
+      const getCanPlayType = (mimeType) => {
+        const v = document.querySelector("#videoTag");
+        return getText(v.canPlayType(mimeType), "canPlayType");
+      };
+
+      const getVideoSpec = (v) => {
+        return `${v.contentType} ${v.width}x${v.height}`;
+      };
+
+      const getAudioSpec = (a) => {
+        return a.contentType;
+      };
+
+      const showMediaCapabilities = (selector, conf) => {
+        navigator.mediaCapabilities.decodingInfo(conf).then((result) => {
+          let spec = "BAD";
+          let contentType = "BAD type";
+          if (conf.video) {
+            spec = getVideoSpec(conf.video);
+            contentType = conf.video.contentType;
+          } else if (conf.audio) {
+            spec = getAudioSpec(conf.audio);
+            contentType = conf.audio.contentType;
+          }
+
+          document.querySelector(selector).innerHTML = [
+            "<td>",
+            spec,
+            "</td><td>",
+            getCanPlayType(contentType),
+            "</td><td>",
+            getText(result.supported, "Supported"),
+            "</td><td>",
+            getText(result.smooth, "Smooth"),
+            "</td><td>",
+            getText(result.powerEfficient, "Power Efficient"),
+            "</td>",
+          ].join("");
+        });
+      };
+
+      const defaultVideo = {
+        width: 1920,
+        height: 1080,
+        bitrate: 10000,
+        framerate: 30,
+      };
+      const defaultAudio = {
+        channels: 2,
+        bitrate: 128000,
+        samplerate: 48000,
+      };
+
+      const getConf = (contentType) => {
+        return {
+          type: "file",
+          video: {
+            ...defaultVideo,
+            contentType,
+          },
+        };
+      };
+      const get4kConf = (contentType) => {
+        const conf = getConf(contentType);
+        conf.video.width = 3840;
+        conf.video.height = 2160;
+        return conf;
+      };
+      const getAudioConf = (contentType) => {
+        return {
+          type: "file",
+          audio: {
+            ...defaultAudio,
+            contentType,
+          },
+        };
+      };
+
+      showMediaCapabilities("#avc1", getConf('video/mp4; codecs="avc1"'));
+      showMediaCapabilities("#avc1-4k", get4kConf('video/mp4; codecs="avc1"'));
+      showMediaCapabilities("#hvc1", getConf('video/mp4; codecs="hvc1"'));
+      showMediaCapabilities("#hvc1-4k", get4kConf('video/mp4; codecs="hvc1"'));
+      showMediaCapabilities("#av01", getConf('video/mp4; codecs="av01"'));
+      showMediaCapabilities("#mp4v", getConf('video/mp4; codecs="mp4v"'));
+
+      showMediaCapabilities("#alac", getAudioConf('audio/mp4; codecs="alac"'));
+      showMediaCapabilities(
+        "#aac",
+        getAudioConf('audio/mp4; codecs="mp4a.40"')
+      );
+      showMediaCapabilities("#mp3", getAudioConf('audio/mpeg'));
+      showMediaCapabilities("#wav", getAudioConf('audio/wav'));
+      showMediaCapabilities("#flac", getAudioConf('audio/flac'));
+    </script>
+  </body>
+</html>
