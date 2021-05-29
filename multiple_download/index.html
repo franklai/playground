@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>multiple download</title>
+    <style>
+      td {
+        padding: 2px 6px;
+      }
+    </style>
+  </head>
+  <body>
+    <div>
+      <p>
+        reference:
+        <a href="https://github.com/sindresorhus/multi-download" target="_blank"
+          >sindresorhus/multi-download</a
+        >
+      </p>
+      <input
+        id="download-me"
+        data-urls="sashimi.jpg ramen.jpg kaisendon.jpg"
+        type="button"
+        value="click to download"
+      />
+    </div>
+
+    <script type="application/javascript">
+      const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+      const download = async (name) => {
+        const a = document.createElement("a");
+        a.download = `${name}`;
+        a.href = name;
+        a.style.display = "none";
+        document.body.append(a);
+        a.click();
+
+        await delay(100);
+        a.remove();
+      };
+
+      const button = document.querySelector("#download-me");
+      button.addEventListener("click", async (evt) => {
+        const urls = evt.target.dataset.urls.split(" ");
+        for (const name of urls) {
+          await delay(2000);
+          download(name);
+        }
+      });
+    </script>
+  </body>
+</html>
