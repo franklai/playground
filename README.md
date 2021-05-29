@@ -30,3 +30,6 @@ https://franklai.github.io/playground/media_capabilities/
 - canPlayType()
 - navigator.mediaCapabilities.decodingInfo()
 
+### multiple download
+https://franklai.github.io/playground/multiple_download/
+
