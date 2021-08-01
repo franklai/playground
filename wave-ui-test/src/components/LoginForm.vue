@@ -1,22 +1,42 @@
 <template>
   <w-form class="login-form">
     <w-flex column align-center justify-center class="wrapper">
-      <w-input label="Username" inner-icon-left="mdi mdi-account"></w-input>
       <w-input
+        v-model="username"
+        v-bind:disabled="isProcessing"
+        label="Username"
+        inner-icon-left="mdi mdi-account"
+      ></w-input>
+      <w-input
+        v-model="password"
+        v-bind:disabled="isProcessing"
         label="Password"
         type="password"
         inner-icon-left="mdi mdi-lock"
       ></w-input>
 
-      <w-button type="submit" class="login-button" @click="uccu()"
+      <w-button
+        type="submit"
+        class="login-button"
+        v-bind:disabled="isProcessing"
+        @click="onSubmit()"
         >Login</w-button
       >
+      <div>{{ loginStatus }}</div>
     </w-flex>
   </w-form>
 </template>
 
 <script>
 export default {
+  data() {
+    return {
+      isProcessing: false,
+      loginStatus: "",
+      username: "",
+      password: "",
+    };
+  },
   methods: {
     sendRequest(api, method, version, params) {
       const data = {
@@ -44,10 +64,47 @@ export default {
       return fetch("/webapi/auth.cgi", {
         method: "POST",
         body: new URLSearchParams(params),
-      });
+      }).then(resp => resp.json());
     },
-    uccu() {
-      console.log("hihi");
+    async doRssList() {
+      return await this.sendRequest("SYNO.DownloadStation2.RSS.Feed", "list", 1, {limit: 100}).then(resp => resp.json());
+    },
+    setProcessing(onGoing) {
+      // using TypeScript will no longer need "!!" ?
+      this.isProcessing = !!onGoing;
+      this.loginStatus = "Procesing, please wait...";
+    },
+    setStatusError(msg) {
+      this.isProcessing = false;
+      this.loginStatus = msg;
+    },
+    setStatusOk() {
+      this.isProcessing = false;
+      this.loginStatus = "Login succeeded.";
+    },
+    async onSubmit() {
+      if (!this.username || !this.password) {
+        return;
+      }
+      this.setProcessing(true);
+      const resp = await this.doLogin(this.username, this.password);
+      console.log('resp:', resp);
+      if (!resp.success) {
+        const msg = resp.error
+          ? `Failed to login, error code ${resp.error.code}`
+          : "Failed to login";
+
+        this.setStatusError(msg);
+        return;
+      }
+
+      this.setStatusOk();
+      
+      this.showRss();
+    },
+    async showRss() {
+      const resp = await this.doRssList();
+      console.log(resp);
     },
   },
 };
