@@ -3,8 +3,14 @@
     <!-- All your app content goes here. -->
     <w-flex column align-center justify-start class="wrapper">
       <div class="banner">Wave UI test</div>
+      <div>
+        <ul>
+          <li><router-link to="/rss">Go to rss</router-link></li>
+          <li><router-link to="/login">Go to login</router-link></li>
+        </ul>
+      </div>
 
-      <LoginForm />
+      <router-view></router-view>
     </w-flex>
   </w-app>
 </template>
