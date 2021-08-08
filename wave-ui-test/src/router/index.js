@@ -1,5 +1,7 @@
 import { createRouter, createWebHistory } from "vue-router";
 
+import { isLoginned } from "../helpers/login";
+
 const routes = [
   {
     path: "/",
@@ -18,7 +20,17 @@ const routes = [
   },
 ];
 
-export default createRouter({
+const router = createRouter({
   history: createWebHistory(),
   routes,
 });
+
+router.beforeEach((to, from, next) => {
+  if (!isLoginned() && to.name !== "Login") {
+    next({ name: "Login" });
+  } else {
+    next();
+  }
+});
+
+export default router;

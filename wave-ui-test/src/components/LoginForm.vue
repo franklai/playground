@@ -28,6 +28,8 @@
 </template>
 
 <script>
+import { setLoginned } from "../helpers/login";
+
 export default {
   data() {
     return {
@@ -64,10 +66,15 @@ export default {
       return fetch("/webapi/auth.cgi", {
         method: "POST",
         body: new URLSearchParams(params),
-      }).then(resp => resp.json());
+      }).then((resp) => resp.json());
     },
     async doRssList() {
-      return await this.sendRequest("SYNO.DownloadStation2.RSS.Feed", "list", 1, {limit: 100}).then(resp => resp.json());
+      return await this.sendRequest(
+        "SYNO.DownloadStation2.RSS.Feed",
+        "list",
+        1,
+        { limit: 100 }
+      ).then((resp) => resp.json());
     },
     setProcessing(onGoing) {
       // using TypeScript will no longer need "!!" ?
@@ -88,7 +95,7 @@ export default {
       }
       this.setProcessing(true);
       const resp = await this.doLogin(this.username, this.password);
-      console.log('resp:', resp);
+      console.log("resp:", resp);
       if (!resp.success) {
         const msg = resp.error
           ? `Failed to login, error code ${resp.error.code}`
@@ -99,8 +106,10 @@ export default {
       }
 
       this.setStatusOk();
-      
-      this.showRss();
+      setLoginned(true);
+
+      this.$router.push("/");
+      // this.showRss();
     },
     async showRss() {
       const resp = await this.doRssList();
