@@ -30,6 +30,8 @@
 <script>
 import { setLoginned } from "../helpers/login";
 
+import "@mdi/font/css/materialdesignicons.min.css";
+
 export default {
   data() {
     return {
@@ -40,18 +42,7 @@ export default {
     };
   },
   methods: {
-    sendRequest(api, method, version, params) {
-      const data = {
-        api,
-        method,
-        version,
-        ...params,
-      };
-      return fetch("/webapi/entry.cgi", {
-        method: "POST",
-        body: new URLSearchParams(data),
-      });
-    },
+
     doLogin(name, pwd) {
       const params = {
         api: "SYNO.API.Auth",
@@ -67,14 +58,6 @@ export default {
         method: "POST",
         body: new URLSearchParams(params),
       }).then((resp) => resp.json());
-    },
-    async doRssList() {
-      return await this.sendRequest(
-        "SYNO.DownloadStation2.RSS.Feed",
-        "list",
-        1,
-        { limit: 100 }
-      ).then((resp) => resp.json());
     },
     setProcessing(onGoing) {
       // using TypeScript will no longer need "!!" ?
@@ -108,7 +91,7 @@ export default {
       this.setStatusOk();
       setLoginned(true);
 
-      this.$router.push("/");
+      this.$router.push("/rss");
       // this.showRss();
     },
     async showRss() {
