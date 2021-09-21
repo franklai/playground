@@ -135,7 +135,7 @@
 
             stations.forEach((item) => {
               stationMap.set(item.StationID, {
-                name: item.StationName.Zh_tw,
+                name: removePrefix(item.StationName.Zh_tw),
               });
             });
 
@@ -255,6 +255,9 @@
         const myJson = await generalFetch(url);
 
         return myJson;
+      };
+      const removePrefix = (value) => {
+        return value.replace("YouBike1.0_", "");
       };
 
       (async () => {
