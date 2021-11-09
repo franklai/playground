@@ -154,9 +154,10 @@
             stationsToUpdate = [];
             const now = new Date();
 
-            for (const [key, item] of stationMap) {
+            for (const stationId of getStationIdsByOrder(this.input)) {
+              const item = stationMap.get(`${stationId}`);
               stationsToUpdate.push({
-                id: key,
+                id: stationId,
                 diff: Math.floor((now - item.update) / 1000 / 60),
                 ...item,
               });
@@ -216,6 +217,14 @@
           result.push(...(await fetchStationById(city, ids)));
         }
         return result;
+      };
+
+      const getStationIdsByOrder = (stations) => {
+        let stationIds = [];
+        for (const { city, ids } of stations) {
+          stationIds = stationIds.concat(ids);
+        }
+        return stationIds;
       };
 
       const fetchStationById = async (city, ids) => {
