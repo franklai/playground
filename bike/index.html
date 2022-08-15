@@ -170,6 +170,8 @@
         },
       });
 
+      const API_PREFIX = "https://tdx.transportdata.tw/api/basic";
+
       const getAuthorizationHeader = () => {
         const appId = "FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF";
         const appKey = "FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF";
@@ -198,7 +200,7 @@
 
         const headers = {
           Accept: "application/json",
-          Authorization: authorization,
+          // Authorization: authorization,
           "X-Date": gmtString,
         };
 
@@ -228,7 +230,7 @@
       };
 
       const fetchStationById = async (city, ids) => {
-        const baseUrl = `https://ptx.transportdata.tw/MOTC/v2/Bike/Station/City/${city}`;
+        const baseUrl = `${API_PREFIX}/v2/Bike/Station/City/${city}`;
         const params = {
           $top: 10,
           $format: "JSON",
@@ -251,7 +253,7 @@
         return result;
       };
       const fetchStationAvailabilityById = async (city, ids) => {
-        const baseUrl = `https://ptx.transportdata.tw/MOTC/v2/Bike/Availability/City/${city}`;
+        const baseUrl = `${API_PREFIX}/v2/Bike/Availability/City/${city}`;
         const params = {
           $top: 10,
           $format: "JSON",
