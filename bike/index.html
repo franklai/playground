@@ -5,11 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>公共自行車資訊</title>
     <script
-      src="https://cdnjs.cloudflare.com/ajax/libs/jsSHA/3.2.0/sha.min.js"
-      integrity="sha512-/yIGjYJZIXZx10ig0yhbK41OiwcqBUxIj0xQJe+NwkMIdS/u07b6Mwo0nvXB4o7A6WiKnKOf92JwE5Ezo27u9Q=="
-      crossorigin="anonymous"
-    ></script>
-    <script
       src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.14/vue.min.js"
       integrity="sha512-XdUZ5nrNkVySQBnnM5vzDqHai823Spoq1W3pJoQwomQja+o4Nw0Ew1ppxo5bhF2vMug6sfibhKWcNJsG8Vj9tg=="
       crossorigin="anonymous"
@@ -172,20 +167,6 @@
 
       const API_PREFIX = "https://tdx.transportdata.tw/api/basic";
 
-      const getAuthorizationHeader = () => {
-        const appId = "FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF";
-        const appKey = "FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF";
-        const gmtString = new Date().toGMTString();
-        const shaObj = new jsSHA("SHA-1", "TEXT");
-        shaObj.setHMACKey(appKey, "TEXT");
-        shaObj.update("x-date: " + gmtString);
-
-        const hmac = shaObj.getHMAC("B64");
-        const authorization = `hmac username="${appId}", algorithm="hmac-sha1", headers="x-date", signature="${hmac}"`;
-
-        return { authorization, gmtString };
-      };
-
       const appendParameters = (baseUrl, params) => {
         const urlParams = new URLSearchParams();
         for (const [key, value] of Object.entries(params)) {
@@ -196,12 +177,8 @@
       };
 
       const generalFetch = async (url) => {
-        const { authorization, gmtString } = getAuthorizationHeader();
-
         const headers = {
           Accept: "application/json",
-          // Authorization: authorization,
-          "X-Date": gmtString,
         };
 
         const resp = await fetch(url, {
