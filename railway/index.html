@@ -9,7 +9,6 @@
       rel="stylesheet"
     />
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsSHA/2.3.1/sha.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.6-rc.0/js/select2.min.js"></script>
     <style>
@@ -59,13 +58,13 @@
     <div id="root">
       <div class="input-container">
         <div>
-          開車：<select id="station-start" placeholder="車站名"> </select>
+          開車：<select id="station-start" placeholder="車站名"></select>
         </div>
         <div>
           <input type="button" id="switch-station" value="互換" />
         </div>
         <div>
-          抵達：<select id="station-stop" placeholder="車站名"> </select>
+          抵達：<select id="station-stop" placeholder="車站名"></select>
         </div>
       </div>
       <div class="date-container">
@@ -79,19 +78,7 @@
       <div class="output-container"></div>
     </div>
     <script>
-      const getAuthorizationHeader = () => {
-        const appId = "FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF";
-        const appKey = "FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF";
-        const gmtString = new Date().toGMTString();
-        const shaObj = new jsSHA("SHA-1", "TEXT");
-        shaObj.setHMACKey(appKey, "TEXT");
-        shaObj.update("x-date: " + gmtString);
-
-        const hmac = shaObj.getHMAC("B64");
-        const authorization = `hmac username="${appId}", algorithm="hmac-sha1", headers="x-date", signature="${hmac}"`;
-
-        return { authorization, gmtString };
-      };
+      const API_PREFIX = "https://tdx.transportdata.tw/api/basic";
 
       const appendParameters = (baseUrl, params) => {
         const urlParams = new URLSearchParams();
@@ -103,12 +90,8 @@
       };
 
       const generalFetch = async (url) => {
-        const { authorization, gmtString } = getAuthorizationHeader();
-
         const headers = {
           Accept: "application/json",
-          Authorization: authorization,
-          "X-Date": gmtString,
         };
 
         const resp = await fetch(url, {
@@ -121,7 +104,7 @@
       };
 
       const fetchStationList = async () => {
-        const baseUrl = "https://ptx.transportdata.tw/MOTC/v2/Rail/TRA/Station";
+        const baseUrl = `${API_PREFIX}/v2/Rail/TRA/Station`;
         const params = {
           $top: 300,
           $format: "JSON",
@@ -133,8 +116,7 @@
       };
 
       const fetchDailyTimetable = async (start, stop, date) => {
-        const baseUrl =
-          "https://ptx.transportdata.tw/MOTC/v2/Rail/TRA/DailyTimetable";
+        const baseUrl = "${API_PREFIX}/v2/Rail/TRA/DailyTimetable";
         const url = `${baseUrl}/OD/${start}/to/${stop}/${date}?$top=300&$format=JSON&$orderby=OriginStopTime/DepartureTime`;
 
         const myJson = await generalFetch(url);
@@ -260,18 +242,22 @@
 
       const padZero = (value) => {
         return `${value}`.padStart(2, "0");
-      }
+      };
 
       (async () => {
         initButtonHandler();
 
         const today = new Date();
-        const dateString = `${today.getFullYear()}-${padZero(today.getMonth() + 1)}-${padZero(today.getDate())}`;
-        const timeString = `${padZero(today.getHours())}:${padZero(today.getMinutes())}`;
+        const dateString = `${today.getFullYear()}-${padZero(
+          today.getMonth() + 1
+        )}-${padZero(today.getDate())}`;
+        const timeString = `${padZero(today.getHours())}:${padZero(
+          today.getMinutes()
+        )}`;
         $("#query-date").val(dateString);
         $("#query-time").val(timeString);
 
-        console.log('time,', timeString)
+        console.log("time,", timeString);
 
         await updateStationList();
 
