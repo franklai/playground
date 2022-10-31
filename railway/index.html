@@ -116,7 +116,7 @@
       };
 
       const fetchDailyTimetable = async (start, stop, date) => {
-        const baseUrl = "${API_PREFIX}/v2/Rail/TRA/DailyTimetable";
+        const baseUrl = `${API_PREFIX}/v2/Rail/TRA/DailyTimetable`;
         const url = `${baseUrl}/OD/${start}/to/${stop}/${date}?$top=300&$format=JSON&$orderby=OriginStopTime/DepartureTime`;
 
         const myJson = await generalFetch(url);
