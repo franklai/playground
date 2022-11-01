@@ -20,10 +20,16 @@
       <table>
         <tr id="avc1"></tr>
         <tr id="avc1-4k"></tr>
+        <tr id="avc1-l42"></tr>
         <tr id="hvc1"></tr>
         <tr id="hvc1-4k"></tr>
 
+        <tr id="hev1"></tr>
+        <tr id="hev1-1-6"></tr>
+        <tr id="hev1-2-4"></tr>
+
         <tr id="av01"></tr>
+        <tr id="av01-10bit"></tr>
         <tr id="mp4v"></tr>
 
         <tr id="aac"></tr>
@@ -126,9 +132,26 @@
 
       showMediaCapabilities("#avc1", getConf('video/mp4; codecs="avc1"'));
       showMediaCapabilities("#avc1-4k", get4kConf('video/mp4; codecs="avc1"'));
+      showMediaCapabilities(
+        "#avc1-l42",
+        getConf('video/mp4; codecs="avc1.64002a"')
+      );
       showMediaCapabilities("#hvc1", getConf('video/mp4; codecs="hvc1"'));
       showMediaCapabilities("#hvc1-4k", get4kConf('video/mp4; codecs="hvc1"'));
+      showMediaCapabilities("#hev1", getConf('video/mp4; codecs="hev1"'));
+      showMediaCapabilities(
+        "#hev1-1-6",
+        getConf('video/mp4; codecs="hev1.1.6.L93.B0"')
+      );
+      showMediaCapabilities(
+        "#hev1-2-4",
+        getConf('video/mp4; codecs="hev1.2.4.L120.B0"')
+      );
       showMediaCapabilities("#av01", getConf('video/mp4; codecs="av01"'));
+      showMediaCapabilities(
+        "#av01-10bit",
+        getConf('video/mp4; codecs="av01.0.09M.10"')
+      );
       showMediaCapabilities("#mp4v", getConf('video/mp4; codecs="mp4v"'));
 
       showMediaCapabilities("#alac", getAudioConf('audio/mp4; codecs="alac"'));
@@ -136,9 +159,9 @@
         "#aac",
         getAudioConf('audio/mp4; codecs="mp4a.40"')
       );
-      showMediaCapabilities("#mp3", getAudioConf('audio/mpeg'));
-      showMediaCapabilities("#wav", getAudioConf('audio/wav'));
-      showMediaCapabilities("#flac", getAudioConf('audio/flac'));
+      showMediaCapabilities("#mp3", getAudioConf("audio/mpeg"));
+      showMediaCapabilities("#wav", getAudioConf("audio/wav"));
+      showMediaCapabilities("#flac", getAudioConf("audio/flac"));
     </script>
   </body>
 </html>
