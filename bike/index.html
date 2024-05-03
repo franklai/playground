@@ -24,7 +24,7 @@
       }
       .station {
         display: grid;
-        grid-template-columns: 230px 50px 50px;
+        grid-template-columns: 250px 50px 50px;
         align-items: center;
         margin: 0 auto;
         grid-row-gap: 1rem;
@@ -256,7 +256,8 @@
       const removePrefix = (value) => {
         return value
           .replace("YouBike1.0_", "1.0 ")
-          .replace("YouBike2.0_", "2.0 ");
+          .replace("YouBike2.0_", "2.0 ")
+          .replace("捷運桃園體育園區站(A19)", "桃園捷運 A19");
       };
 
       (async () => {
