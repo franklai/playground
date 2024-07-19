@@ -24,7 +24,7 @@
       }
       .station {
         display: grid;
-        grid-template-columns: 230px 50px 50px;
+        grid-template-columns: 230px 36px 20px 36px;
         align-items: center;
         margin: 0 auto;
         grid-row-gap: 1rem;
@@ -33,12 +33,16 @@
         text-align: right;
       }
       .bike,
+      .bike-general,
+      .bike-electric,
       .space {
-        font-size: 1.4rem;
+        font-size: 1.2rem;
         font-weight: bold;
         text-align: center;
       }
-      .bike {
+      .bike,
+      .bike-general,
+      .bike-electric {
         color: green;
       }
       .space {
@@ -105,16 +109,17 @@
               city: "Taoyuan",
               ids: [
                 2212, // 青塘園
-                2421, // 置地廣場 桃園 1.0
+                // 2421, // 置地廣場 桃園 1.0
                 500304101, // 置地廣場 桃園 2.0
-                2101, // 捷運桃園體育園區站(A19) 1.0
+                // 2101, // 捷運桃園體育園區站(A19) 1.0
                 500304035, // 捷運桃園體育園區站(A19) 2.0
-                2343, // 高鐵桃園站(3號出口) 1.0
+                // 2343, // 高鐵桃園站(3號出口) 1.0
                 500304085, // 高鐵桃園站(3號出口) 2.0
-                2100, // 捷運高鐵桃園站(A18) 1.0
+                // 2100, // 捷運高鐵桃園站(A18) 1.0
                 500304034, // 捷運高鐵桃園站(A18) 2.0
-                2275, // 竹風青田 1.0
+                // 2275, // 竹風青田 1.0
                 500304069, // 竹風青田 2.0
+                500304113, // 清溪兒童公園 2.0
               ],
             },
           ],
@@ -151,6 +156,8 @@
               }
 
               station.bike = item.AvailableRentBikes;
+              station.general = item?.AvailableRentBikesDetail?.GeneralBikes;
+              station.electric = item?.AvailableRentBikesDetail?.ElectricBikes;
               station.space = item.AvailableReturnBikes;
               station.update = new Date(item.SrcUpdateTime);
             });
