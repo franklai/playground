@@ -31,6 +31,8 @@
         <tr id="hev1-1-6"></tr>
         <tr id="hev1-2-4"></tr>
 
+        <tr id="vp9"></tr>
+        <tr id="vp9-4k"></tr>
         <tr id="av01"></tr>
         <tr id="av01-10bit"></tr>
         <tr id="mp4v"></tr>
@@ -158,6 +160,14 @@
       showMediaCapabilities(
         "#hev1-2-4",
         get4kConf('video/mp4; codecs="hev1.2.4.L153.B0"')
+      );
+      showMediaCapabilities(
+        "#vp9",
+        getConf('video/mp4; codecs="vp09.00.50.08"')
+      );
+      showMediaCapabilities(
+        "#vp9-4k",
+        get4kConf('video/mp4; codecs="vp09.00.51.08"')
       );
       showMediaCapabilities("#av01", getConf('video/mp4; codecs="av01"'));
       showMediaCapabilities(
