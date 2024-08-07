@@ -167,6 +167,10 @@
 
             for (const stationId of getStationIdsByOrder(this.input)) {
               const item = stationMap.get(`${stationId}`);
+              if (!item) {
+                console.log(`no item of station id ${stationId}`)
+                continue;
+              }
               stationsToUpdate.push({
                 id: stationId,
                 diff: Math.floor((now - item.update) / 1000 / 60),
